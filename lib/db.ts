@@ -3,9 +3,9 @@ import { Pool, PoolClient, QueryResultRow } from "pg";
 let pool: Pool | undefined;
 export function getPool() {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) throw new Error("DATABASE_URL is not configured");
-    pool = new Pool({ connectionString, max: 10, ssl: connectionString.includes("localhost") ? false : { rejectUnauthorized: false } });
+    const connectionString = process.env.DATABASE_URL || process.env.NETLIFY_DB_URL;
+    if (!connectionString) throw new Error("DATABASE_URL or NETLIFY_DB_URL is not configured");
+    pool = new Pool({ connectionString, max: 10 });
   }
   return pool;
 }

@@ -9,7 +9,7 @@ Next.js, TypeScript, Tailwind CSS, PostgreSQL (`pg`), Zod, and Vitest. It uses o
 ## Setup
 
 1. Copy `.env.example` to `.env.local` and set `DATABASE_URL` and a strong `API_KEY`.
-2. Create a PostgreSQL database and run `psql "$DATABASE_URL" -f db/schema.sql`.
+2. For an external Neon database, run `psql "$DATABASE_URL" -f db/schema.sql` once. For Netlify Database, the migration under `netlify/database/migrations/` is applied by Netlify during deployment.
 3. Run `npm install`, then `npm run dev`.
 
 The API key is server-only. The web UI calls narrowly scoped `/api/web/*` adapters and never receives it.
@@ -47,7 +47,7 @@ Routes: `POST /reset`, `GET /slots?provider=`, `POST /bookings`, `GET /bookings?
 
 ## Netlify deployment
 
-Create a Neon/Netlify Database, run `db/schema.sql` against its connection string, and set `DATABASE_URL` and `API_KEY` in Netlify site environment variables. Connect the repository to Netlify; its Next.js integration builds with `npm run build` without a custom `netlify.toml`. Do not add `API_KEY` as a `NEXT_PUBLIC_` value. After deploy, issue the curl commands above against the Netlify origin.
+Connect this GitHub repository to a Netlify site. In the site dashboard, select **Data & Storage → Database → Create a database manually**. Netlify Database supplies `NETLIFY_DB_URL` to functions; this application uses it automatically unless `DATABASE_URL` is set. Set only `API_KEY` in Netlify site environment variables. The `0001_clinic_schema.sql` migration is applied during deploy. Netlify's Next.js integration builds with `npm run build` without a custom `netlify.toml`. Do not add `API_KEY` as a `NEXT_PUBLIC_` value. After deploy, issue the curl commands above against the Netlify origin.
 
 ## Assumptions
 
