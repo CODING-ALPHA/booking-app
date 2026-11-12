@@ -35,8 +35,8 @@ export async function GET(request: Request) {
     const values: unknown[] = [email]; let where = "email = $1";
     if (decoded) { values.push(decoded.created_at, decoded.id); where += " AND (created_at, id) > ($2::timestamptz, $3::uuid)"; }
     values.push(limit + 1);
-    const rows = await query(`SELECT id, slot_id, name, email, status, created_at FROM bookings WHERE ${where} ORDER BY created_at ASC, id ASC LIMIT $${values.length}`, values);
-    const hasMore = rows.rows.length > limit, items = rows.rows.slice(0, limit).map(booking), last = items.at(-1);
-    return json({ bookings: items, next_cursor: hasMore && last ? Buffer.from(JSON.stringify({ created_at: last.created_at, id: last.id })).toString("base64url") : null });
+    const rows = await query(`SELECT id, slot_id, name, email, status, created_at, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_created_at FROM bookings WHERE ${where} ORDER BY created_at ASC, id ASC LIMIT $${values.length}`, values);
+    const hasMore = rows.rows.length > limit, items = rows.rows.slice(0, limit).map(booking), last = rows.rows[limit - 1];
+    return json({ bookings: items, next_cursor: hasMore && last ? Buffer.from(JSON.stringify({ created_at: last.cursor_created_at, id: last.id })).toString("base64url") : null });
   } catch { return error("Internal server error", 500); }
 }
