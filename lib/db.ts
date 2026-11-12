@@ -1,10 +1,10 @@
 import { Pool, PoolClient, QueryResultRow } from "pg";
+import { getConnectionString } from "@netlify/database";
 
 let pool: Pool | undefined;
 export function getPool() {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL || process.env.NETLIFY_DB_URL;
-    if (!connectionString) throw new Error("DATABASE_URL or NETLIFY_DB_URL is not configured");
+    const connectionString = process.env.DATABASE_URL || process.env.NETLIFY_DB_URL || getConnectionString();
     pool = new Pool({ connectionString, max: 10 });
   }
   return pool;

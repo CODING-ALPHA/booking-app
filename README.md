@@ -47,7 +47,7 @@ Routes: `POST /reset`, `GET /slots?provider=`, `POST /bookings`, `GET /bookings?
 
 ## Netlify deployment
 
-Connect this GitHub repository to a Netlify site and set `API_KEY` in its environment variables. The installed `@netlify/database` package tells Netlify to provision its managed PostgreSQL database on deployment. Netlify then supplies `NETLIFY_DB_URL` to functions; this application uses it automatically unless `DATABASE_URL` is set. The `0001_clinic_schema.sql` migration is applied during deploy. Netlify's Next.js integration builds with `npm run build` without a custom `netlify.toml`. Do not add `API_KEY` as a `NEXT_PUBLIC_` value. After deploy, issue the curl commands above against the Netlify origin.
+Connect this GitHub repository to a Netlify site and set `API_KEY` in its environment variables. The installed `@netlify/database` package tells Netlify to provision its managed PostgreSQL database on deployment. The application obtains the production connection through Netlify Database's `getConnectionString()` helper; a manually configured `DATABASE_URL` takes precedence for local or external databases. The `0001_clinic_schema.sql` migration is applied during deploy. Netlify's Next.js integration builds with `npm run build` without a custom `netlify.toml`. Do not add `API_KEY` as a `NEXT_PUBLIC_` value. After deploy, issue the curl commands above against the Netlify origin.
 
 ## Assumptions
 
