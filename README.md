@@ -43,7 +43,7 @@ Routes: `POST /reset`, `GET /slots?provider=`, `POST /bookings`, `GET /bookings?
 
 ## Tests
 
-`tests/validation.test.ts` covers request normalization and schema edge cases. The architecture is ready for PostgreSQL integration tests against a dedicated `DATABASE_URL`; point test execution at an isolated database when adding full endpoint/concurrency coverage.
+`tests/validation.test.ts` covers request normalization and schema edge cases. `tests/page.test.tsx` exercises the patient flow with mocked responses: loading and filtering, booking confirmation, and a slot conflict. Full endpoint and concurrency tests still require an isolated PostgreSQL test database.
 
 ## Netlify deployment
 

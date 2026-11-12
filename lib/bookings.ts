@@ -38,7 +38,9 @@ export async function createBooking(input: { slot_id: string; name: string; emai
         const prior = await client.query<{ fingerprint: string; response_status: number; response_body: ApiResult["body"] }>("SELECT fingerprint, response_status, response_body FROM idempotency_records WHERE key = $1", [idempotencyKey]);
         if (prior.rowCount) {
           const record = prior.rows[0];
-          return record.fingerprint === hash ? response(record.response_status, record.response_body) : response(422, { error: "Idempotency-Key was reused with a different request." });
+          return record.fingerprint === hash
+            ? response(record.response_status, record.response_body, record.response_status === 429 ? { "Retry-After": "1" } : undefined)
+            : response(422, { error: "Idempotency-Key was reused with a different request." });
         }
       }
       const limited = await rateLimit(client, input.email);

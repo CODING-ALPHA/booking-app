@@ -1,4 +1,68 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { @apply bg-slate-50 text-slate-900; }
+
+:root { font: 100%/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #17312d; background: #f6f8f6; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 3px solid #0d806e; outline-offset: 3px; }
+.clinic-shell { max-width: 1160px; margin: 0 auto; padding: 0 28px 88px; }
+.site-header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0; border-bottom: 1px solid #dce5df; }
+.brand { display: flex; gap: 10px; align-items: center; font-weight: 750; font-size: 1.1rem; letter-spacing: -.025em; }
+.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: #126c5c; color: white; font-size: 1.4rem; }
+.header-note { color: #6b7c75; font-size: .85rem; }
+.hero { padding: 66px 0 56px; max-width: 720px; }
+.eyebrow, .step-label { color: #0b7463; font-size: .75rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.hero h1, .confirmation-card h1 { font-size: clamp(2.5rem, 5vw, 4.35rem); line-height: 1.05; letter-spacing: -.052em; font-weight: 750; margin: 10px 0 16px; }
+.hero > p:last-child { font-size: 1.12rem; color: #63746d; max-width: 580px; margin: 0; }
+.booking-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 32px; align-items: start; }
+.section-heading { display: flex; gap: 20px; justify-content: space-between; align-items: end; margin-bottom: 18px; }
+.section-heading h2, .details-panel h2 { font-size: 1.52rem; letter-spacing: -.035em; line-height: 1.2; margin: 7px 0 0; }
+.step-label { margin: 0; }
+.filter-label { display: grid; gap: 5px; color: #5e6f68; font-size: .77rem; font-weight: 650; }
+.filter-label select { min-height: 43px; min-width: 155px; border: 1px solid #d3dfd8; border-radius: 11px; background: white; color: #17312d; padding: 0 12px; }
+.slot-list { display: grid; gap: 11px; }
+.slot-card { width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 15px; border: 1px solid #dce5df; border-radius: 18px; background: white; padding: 19px 20px; box-shadow: 0 3px 12px rgba(19,57,45,.035); transition: border-color .16s, box-shadow .16s, transform .12s; }
+.slot-card:hover { border-color: #67aa9b; box-shadow: 0 8px 22px rgba(19,57,45,.075); }
+.slot-card:active, .primary-button:active { transform: scale(.985); }
+.slot-selected { border: 2px solid #0d806e; padding: 18px 19px; background: #f2faf7; }
+.slot-info { display: grid; gap: 2px; }
+.slot-info strong { font-size: 1.04rem; }
+.slot-info > span { color: #4b5d55; font-size: .9rem; }
+.slot-info small { color: #76867e; font-size: .8rem; }
+.slot-action { flex: none; color: #0b7463; font-size: .83rem; font-weight: 720; }
+.state-card { padding: 32px; border-radius: 18px; border: 1px dashed #cadbd1; background: white; color: #60736a; }
+.state-card strong { display: block; color: #17312d; font-size: 1.02rem; }
+.state-card p { margin: 6px 0 12px; }
+.text-button { border: 0; background: none; color: #087a68; padding: 4px 0; font-weight: 700; }
+.details-panel { position: sticky; top: 24px; padding: 28px; border: 1px solid #dce5df; border-radius: 22px; background: rgba(255,255,255,.85); box-shadow: 0 16px 40px rgba(19,57,45,.065); backdrop-filter: blur(16px); }
+.chosen-time { display: grid; gap: 3px; margin: 24px 0; padding: 16px; border-radius: 13px; background: #f1f6f2; color: #60736a; font-size: .85rem; }
+.chosen-time strong { color: #17312d; font-size: .98rem; }
+.details-panel form { display: grid; }
+.details-panel label { margin: 0 0 6px; font-size: .85rem; font-weight: 700; }
+.details-panel input { width: 100%; min-height: 46px; border: 1px solid #cedbd2; border-radius: 11px; padding: 10px 13px; background: white; color: #17312d; margin-bottom: 17px; }
+.details-panel input::placeholder { color: #8b9991; }
+.details-panel input:focus { border-color: #0d806e; }
+.form-notice { margin: 0 0 16px; padding: 11px 13px; background: #fff1ef; border-radius: 10px; color: #9d3328; font-size: .84rem; }
+.primary-button { width: 100%; min-height: 48px; padding: 11px 18px; border: 0; border-radius: 12px; background: #126c5c; color: white; font-weight: 730; transition: background .16s, transform .12s; }
+.primary-button:hover:not(:disabled) { background: #0b594a; }
+.primary-button:disabled { background: #a9b9b0; }
+.privacy-note { color: #819087; font-size: .76rem; text-align: center; margin: 13px 0 0; }
+.confirmation-shell { max-width: 680px; padding-top: 28px; }
+.confirmation-card { margin: 72px 0; border: 1px solid #dce5df; border-radius: 26px; background: white; padding: clamp(26px, 6vw, 48px); box-shadow: 0 16px 40px rgba(19,57,45,.065); }
+.success-icon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 24px; border-radius: 50%; background: #e5f5ed; color: #0b7463; font-size: 1.8rem; font-weight: 700; }
+.confirmation-card h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); }
+.muted { color: #64756c; }
+.confirmation-details { margin: 30px 0; border-top: 1px solid #e6ede7; }
+.confirmation-details > div { display: grid; grid-template-columns: 140px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e6ede7; font-size: .88rem; }
+.confirmation-details span { color: #64756c; }
+.confirmation-details strong { font-weight: 680; overflow-wrap: anywhere; }
+.booking-id { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .78rem; }
+@media (max-width: 760px) { .clinic-shell { padding: 0 18px 60px; } .hero { padding: 46px 0 38px; } .booking-layout { grid-template-columns: 1fr; gap: 28px; } .details-panel { position: static; } .header-note { display: none; } }
+@media (max-width: 480px) { .section-heading { align-items: stretch; flex-direction: column; } .filter-label select { width: 100%; } .slot-card { align-items: start; } .slot-action { padding-top: 3px; } .confirmation-details > div { grid-template-columns: 1fr; gap: 2px; } }
+@media (prefers-reduced-motion: reduce) { .slot-card, .primary-button { transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .details-panel { background: white; backdrop-filter: none; } }
+@media (prefers-contrast: more) { .slot-card, .details-panel, .confirmation-card { border-color: #17312d; } }

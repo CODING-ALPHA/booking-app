@@ -1,14 +1,104 @@
 "use client";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+
+import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 type Slot = { id: string; provider: string; start: string; end: string; available: boolean };
 type Booking = { id: string; name: string; email: string };
-const date = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+type LoadState = "loading" | "ready" | "error";
+
+const dateTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "full", timeStyle: "short" }).format(new Date(value));
+const time = (value: string) => new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date(value));
+
 export default function Page() {
-  const [slots, setSlots] = useState<Slot[]>([]), [provider, setProvider] = useState(""), [selected, setSelected] = useState<Slot | null>(null), [name, setName] = useState(""), [email, setEmail] = useState(""), [notice, setNotice] = useState(""), [busy, setBusy] = useState(false), [confirmation, setConfirmation] = useState<Booking | null>(null);
-  const providers = useMemo(() => [...new Set(slots.map((s) => s.provider))], [slots]);
-  const load = async (filter = provider) => { const res = await fetch(`/api/web/slots${filter ? `?provider=${encodeURIComponent(filter)}` : ""}`); const data = await res.json(); setSlots(data.slots ?? []); };
-  useEffect(() => { void fetch("/api/web/slots").then(async (response) => setSlots((await response.json()).slots ?? [])); }, []);
-  async function submit(event: FormEvent) { event.preventDefault(); if (!selected) return setNotice("Please select an appointment."); setBusy(true); setNotice(""); const res = await fetch("/api/web/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot_id: selected.id, name, email }) }); const body = await res.json(); setBusy(false); if (!res.ok) { setNotice(body.error ?? "Unable to book the appointment."); void load(); return; } setConfirmation(body); }
-  if (confirmation) return <main className="mx-auto max-w-xl p-8 sm:pt-20"><section className="rounded-2xl border border-emerald-200 bg-white p-8 shadow-sm"><p className="text-sm font-bold text-emerald-700">APPOINTMENT CONFIRMED</p><h1 className="mt-2 text-3xl font-bold">You’re booked.</h1><p className="mt-6"><b>{selected?.provider}</b><br />{selected && date(selected.start)}</p><p className="mt-4">{confirmation.name}<br />{confirmation.email}</p><p className="mt-5 break-all text-xs text-slate-500">Booking ID: {confirmation.id}</p><button onClick={() => { setConfirmation(null); setSelected(null); void load(); }} className="mt-8 rounded-lg bg-sky-700 px-4 py-2.5 font-semibold text-white">View slots</button></section></main>;
-  return <main className="mx-auto max-w-6xl p-5 sm:py-14"><header className="mb-10"><p className="font-bold text-sky-700">KOYA CLINIC</p><h1 className="mt-2 text-4xl font-bold tracking-tight">Book a visit that fits your day.</h1><p className="mt-3 text-slate-600">Choose a time with your healthcare provider and we’ll confirm it instantly.</p></header><div className="grid gap-8 lg:grid-cols-[1.4fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">Appointments</h2><select aria-label="Provider" value={provider} onChange={(e) => { setProvider(e.target.value); void load(e.target.value); }} className="rounded border bg-white p-2 text-sm"><option value="">All providers</option>{providers.map((p) => <option key={p}>{p}</option>)}</select></div><div className="grid gap-3">{slots.map((slot) => <article key={slot.id} className="flex items-center justify-between gap-4 rounded-xl border bg-white p-4"><div><b>{slot.provider}</b><p className="mt-1 text-sm text-slate-600">{date(slot.start)}</p></div><button disabled={!slot.available} onClick={() => setSelected(slot)} className="rounded-lg border border-sky-700 px-3 py-2 text-sm font-semibold text-sky-700 disabled:border-slate-300 disabled:text-slate-400">{slot.available ? (selected?.id === slot.id ? "Selected" : "Select") : "Unavailable"}</button></article>)}{!slots.length && <p className="text-slate-500">No matching appointments.</p>}</div></section><aside className="h-fit rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Your details</h2><p className="mt-1 text-sm text-slate-600">{selected ? `${selected.provider} · ${date(selected.start)}` : "Select an appointment first."}</p><form onSubmit={submit} className="mt-5 space-y-4"><label className="block text-sm font-medium">Full name<input required value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-lg border p-2.5" /></label><label className="block text-sm font-medium">Email<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-2.5" /></label>{notice && <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">{notice}</p>}<button disabled={!selected || busy} className="w-full rounded-lg bg-sky-700 p-3 font-semibold text-white disabled:bg-slate-400">{busy ? "Booking…" : "Confirm appointment"}</button></form></aside></div></main>;
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [provider, setProvider] = useState("");
+  const [selected, setSelected] = useState<Slot | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [notice, setNotice] = useState("");
+  const [loadState, setLoadState] = useState<LoadState>("loading");
+  const [busy, setBusy] = useState(false);
+  const [confirmation, setConfirmation] = useState<Booking | null>(null);
+  const requestKey = useRef<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoadState("loading");
+    try {
+      const response = await fetch("/api/web/slots", { cache: "no-store" });
+      if (!response.ok) throw new Error("Slots are unavailable right now.");
+      const data: { slots?: Slot[] } = await response.json();
+      if (!Array.isArray(data.slots)) throw new Error("Slots are unavailable right now.");
+      setSlots(data.slots);
+      setSelected((current) => current && data.slots?.find((slot) => slot.id === current.id && slot.available) || null);
+      setLoadState("ready");
+    } catch {
+      setSelected(null);
+      setLoadState("error");
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const providers = useMemo(() => [...new Set(slots.map((slot) => slot.provider))].sort(), [slots]);
+  const visibleSlots = useMemo(() => slots.filter((slot) => slot.available && new Date(slot.start).getTime() > Date.now() && (!provider || slot.provider === provider)), [slots, provider]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) { setNotice("Choose an appointment time first."); return; }
+    setBusy(true);
+    setNotice("");
+    try {
+      requestKey.current ??= crypto.randomUUID();
+      const response = await fetch("/api/web/bookings", {
+        method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey.current },
+        body: JSON.stringify({ slot_id: selected.id, name, email }),
+      });
+      const body: Booking & { error?: string } = await response.json();
+      if (!response.ok) {
+        setNotice(response.status === 409 ? "That time was just booked. Please choose another." : body.error || "We couldn't book this appointment. Please try again.");
+        if (response.status === 429) requestKey.current = null;
+        if (response.status === 409 || response.status === 404) void load();
+        return;
+      }
+      setConfirmation(body);
+    } catch {
+      setNotice("We couldn't connect. Please check your connection and try again.");
+    } finally { setBusy(false); }
+  }
+
+  if (confirmation) return (
+    <main className="clinic-shell confirmation-shell">
+      <div className="brand"><span className="brand-mark" aria-hidden="true">✳</span><span>Koya Clinic</span></div>
+      <section className="confirmation-card" aria-live="polite">
+        <span className="success-icon" aria-hidden="true">✓</span>
+        <p className="eyebrow">Appointment confirmed</p><h1>You&apos;re all set.</h1>
+        <p className="muted">Your visit is booked. Keep this confirmation for your records.</p>
+        <div className="confirmation-details">
+          <div><span>Provider</span><strong>{selected?.provider}</strong></div>
+          <div><span>When</span><strong>{selected && `${dateTime(selected.start)} – ${time(selected.end)}`}</strong></div>
+          <div><span>Patient</span><strong>{confirmation.name}</strong></div>
+          <div><span>Email</span><strong>{confirmation.email}</strong></div>
+          <div><span>Booking reference</span><strong className="booking-id">{confirmation.id}</strong></div>
+        </div>
+        <button className="primary-button" onClick={() => { setConfirmation(null); setSelected(null); setNotice(""); requestKey.current = null; void load(); }}>Book another appointment</button>
+      </section>
+    </main>
+  );
+
+  return (
+    <main className="clinic-shell">
+      <header className="site-header"><div className="brand"><span className="brand-mark" aria-hidden="true">✳</span><span>Koya Clinic</span></div><span className="header-note">Appointments, made simple</span></header>
+      <div className="hero"><p className="eyebrow">Book a visit</p><h1>Care that fits your day.</h1><p>Choose an available time, add your details, and get an instant confirmation.</p></div>
+      <div className="booking-layout">
+        <section className="slots-section" aria-labelledby="slots-title">
+          <div className="section-heading"><div><p className="step-label">01 / Choose a time</p><h2 id="slots-title">Available appointments</h2></div><label className="filter-label">Provider<select value={provider} onChange={(event) => { setProvider(event.target.value); setSelected(null); setNotice(""); requestKey.current = null; }}><option value="">All providers</option>{providers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div>
+          {loadState === "loading" && <div className="state-card" role="status">Finding available appointments…</div>}
+          {loadState === "error" && <div className="state-card" role="alert"><strong>We couldn&apos;t load appointments.</strong><p>Please check your connection and try again.</p><button className="text-button" onClick={() => void load()}>Try again</button></div>}
+          {loadState === "ready" && visibleSlots.length === 0 && <div className="state-card"><strong>No times available{provider ? ` for ${provider}` : ""}.</strong><p>Try another provider or check back later.</p>{provider && <button className="text-button" onClick={() => setProvider("")}>See all providers</button>}</div>}
+          {loadState === "ready" && visibleSlots.length > 0 && <div className="slot-list">{visibleSlots.map((slot) => <button type="button" key={slot.id} aria-pressed={selected?.id === slot.id} className={`slot-card ${selected?.id === slot.id ? "slot-selected" : ""}`} onClick={() => { setSelected(slot); setNotice(""); requestKey.current = null; }}><span className="slot-info"><strong>{slot.provider}</strong><span>{dateTime(slot.start)}</span><small>Until {time(slot.end)}</small></span><span className="slot-action">{selected?.id === slot.id ? "Selected ✓" : "Choose time"}</span></button>)}</div>}
+        </section>
+        <aside className="details-panel" aria-labelledby="details-title"><p className="step-label">02 / Your details</p><h2 id="details-title">Confirm your visit</h2><div className="chosen-time">{selected ? <><span>Selected appointment</span><strong>{selected.provider}</strong><span>{dateTime(selected.start)} – {time(selected.end)}</span></> : <span>Choose a time to continue.</span>}</div><form onSubmit={submit}><label htmlFor="patient-name">Full name</label><input id="patient-name" name="name" autoComplete="name" required maxLength={120} value={name} onChange={(event) => { setName(event.target.value); requestKey.current = null; }} placeholder="Your full name" /><label htmlFor="patient-email">Email address</label><input id="patient-email" name="email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => { setEmail(event.target.value); requestKey.current = null; }} placeholder="you@example.com" />{notice && <p className="form-notice" role="alert">{notice}</p>}<button className="primary-button" type="submit" disabled={!selected || busy}>{busy ? "Confirming…" : "Confirm appointment"}</button><p className="privacy-note">Your details are used to confirm this appointment.</p></form></aside>
+      </div>
+    </main>
+  );
 }

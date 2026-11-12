@@ -4,6 +4,7 @@ import { query } from "@/lib/db";
 import { booking } from "@/lib/format";
 import { error, json } from "@/lib/http";
 import { normalizeEmail, bookingSchema, readJson } from "@/lib/validation";
+import { isBookingId } from "@/lib/validation";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   const unauthorized = requireApiKey(request); if (unauthorized) return unauthorized;
@@ -11,7 +12,17 @@ export async function POST(request: Request) {
   if (!parsed.success) { const email = normalizeEmail((raw as { email?: unknown } | undefined)?.email); if (email) { try { const limited = await recordFailedAttempt(email); if (limited) return json(limited.body, limited.status, limited.headers); } catch { return error("Internal server error", 500); } } return error("Invalid booking request", 400); }
   try { const result = await createBooking(parsed.data, request.headers.get("idempotency-key")); return json(result.body, result.status, result.headers); } catch { return error("Internal server error", 500); }
 }
-function decodeCursor(cursor: string) { try { const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")); return typeof value.created_at === "string" && typeof value.id === "string" ? value : null; } catch { return null; } }
+function decodeCursor(cursor: string): { created_at: string; id: string } | null {
+  try {
+    if (!/^[A-Za-z0-9_-]+$/.test(cursor)) return null;
+    const value: unknown = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+    if (!value || typeof value !== "object") return null;
+    const item = value as Record<string, unknown>;
+    if (typeof item.created_at !== "string" || Number.isNaN(Date.parse(item.created_at))) return null;
+    if (typeof item.id !== "string" || !isBookingId(item.id)) return null;
+    return { created_at: item.created_at, id: item.id };
+  } catch { return null; }
+}
 export async function GET(request: Request) {
   const unauthorized = requireApiKey(request); if (unauthorized) return unauthorized;
   const params = new URL(request.url).searchParams, email = normalizeEmail(params.get("email"));
