@@ -13,6 +13,22 @@ const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data)
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("patient booking page", () => {
+  it("explains that a time is required without trapping the user behind a disabled button", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply({ slots })));
+    render(<Page />);
+    await screen.findByRole("button", { name: /Dr Ada/ });
+    const action = screen.getByRole("button", { name: "Choose an appointment time" }) as HTMLButtonElement;
+    expect(action.disabled).toBe(false);
+    expect(action.type).toBe("button");
+  });
+
+  it("explains Netlify visitor access failures beside the appointment list", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply({}, 401)));
+    render(<Page />);
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/Netlify project must be public/));
+    expect(screen.getByRole("button", { name: "Retry loading times" })).not.toBeNull();
+  });
+
   it("shows a loading state and keeps provider choices available after filtering", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => reply({ slots })));
     render(<Page />);

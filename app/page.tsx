@@ -17,6 +17,7 @@ export default function Page() {
   const [email, setEmail] = useState("");
   const [notice, setNotice] = useState("");
   const [loadState, setLoadState] = useState<LoadState>("loading");
+  const [loadError, setLoadError] = useState("Please check your connection and try again.");
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState<Booking | null>(null);
   const requestKey = useRef<string | null>(null);
@@ -25,13 +26,16 @@ export default function Page() {
     setLoadState("loading");
     try {
       const response = await fetch("/api/web/slots", { cache: "no-store" });
-      if (!response.ok) throw new Error("Slots are unavailable right now.");
+      if (response.status === 401 || response.status === 403) throw new Error("This site is asking visitors to sign in. The Netlify project must be public before appointment times can load.");
+      if (!response.ok) throw new Error("Appointment times are unavailable. Please try again shortly.");
       const data: { slots?: Slot[] } = await response.json();
       if (!Array.isArray(data.slots)) throw new Error("Slots are unavailable right now.");
       setSlots(data.slots);
       setSelected((current) => current && data.slots?.find((slot) => slot.id === current.id && slot.available) || null);
       setLoadState("ready");
-    } catch {
+    } catch (cause) {
+      setLoadError(cause instanceof Error ? cause.message : "Please check your connection and try again.");
+      setSlots([]);
       setSelected(null);
       setLoadState("error");
     }
@@ -93,11 +97,26 @@ export default function Page() {
         <section className="slots-section" aria-labelledby="slots-title">
           <div className="section-heading"><div><p className="step-label">01 / Choose a time</p><h2 id="slots-title">Available appointments</h2></div><label className="filter-label">Provider<select value={provider} onChange={(event) => { setProvider(event.target.value); setSelected(null); setNotice(""); requestKey.current = null; }}><option value="">All providers</option>{providers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div>
           {loadState === "loading" && <div className="state-card" role="status">Finding available appointments…</div>}
-          {loadState === "error" && <div className="state-card" role="alert"><strong>We couldn&apos;t load appointments.</strong><p>Please check your connection and try again.</p><button className="text-button" onClick={() => void load()}>Try again</button></div>}
+          {loadState === "error" && <div className="state-card" role="alert"><strong>We couldn&apos;t load appointments.</strong><p>{loadError}</p><button className="text-button" onClick={() => void load()}>Try again</button></div>}
           {loadState === "ready" && visibleSlots.length === 0 && <div className="state-card"><strong>No times available{provider ? ` for ${provider}` : ""}.</strong><p>Try another provider or check back later.</p>{provider && <button className="text-button" onClick={() => setProvider("")}>See all providers</button>}</div>}
           {loadState === "ready" && visibleSlots.length > 0 && <div className="slot-list">{visibleSlots.map((slot) => <button type="button" key={slot.id} aria-pressed={selected?.id === slot.id} className={`slot-card ${selected?.id === slot.id ? "slot-selected" : ""}`} onClick={() => { setSelected(slot); setNotice(""); requestKey.current = null; }}><span className="slot-info"><strong>{slot.provider}</strong><span>{dateTime(slot.start)}</span><small>Until {time(slot.end)}</small></span><span className="slot-action">{selected?.id === slot.id ? "Selected ✓" : "Choose time"}</span></button>)}</div>}
         </section>
-        <aside className="details-panel" aria-labelledby="details-title"><p className="step-label">02 / Your details</p><h2 id="details-title">Confirm your visit</h2><div className="chosen-time">{selected ? <><span>Selected appointment</span><strong>{selected.provider}</strong><span>{dateTime(selected.start)} – {time(selected.end)}</span></> : <span>Choose a time to continue.</span>}</div><form onSubmit={submit}><label htmlFor="patient-name">Full name</label><input id="patient-name" name="name" autoComplete="name" required maxLength={120} value={name} onChange={(event) => { setName(event.target.value); requestKey.current = null; }} placeholder="Your full name" /><label htmlFor="patient-email">Email address</label><input id="patient-email" name="email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => { setEmail(event.target.value); requestKey.current = null; }} placeholder="you@example.com" />{notice && <p className="form-notice" role="alert">{notice}</p>}<button className="primary-button" type="submit" disabled={!selected || busy}>{busy ? "Confirming…" : "Confirm appointment"}</button><p className="privacy-note">Your details are used to confirm this appointment.</p></form></aside>
+        <aside className="details-panel" aria-labelledby="details-title">
+          <p className="step-label">02 / Your details</p>
+          <h2 id="details-title">Confirm your visit</h2>
+          <div className="chosen-time">
+            {selected ? <><span>Selected appointment</span><strong>{selected.provider}</strong><span>{dateTime(selected.start)} – {time(selected.end)}</span></> : <span>{loadState === "error" ? "Appointment times could not load. Check the message under Available appointments." : loadState === "ready" && visibleSlots.length === 0 ? "No appointment times are available yet." : "Choose a time to continue."}</span>}
+          </div>
+          <form onSubmit={submit}>
+            <label htmlFor="patient-name">Full name</label>
+            <input id="patient-name" name="name" autoComplete="name" required maxLength={120} value={name} onChange={(event) => { setName(event.target.value); requestKey.current = null; }} placeholder="Your full name" />
+            <label htmlFor="patient-email">Email address</label>
+            <input id="patient-email" name="email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => { setEmail(event.target.value); requestKey.current = null; }} placeholder="you@example.com" />
+            {notice && <p className="form-notice" role="alert">{notice}</p>}
+            <button className="primary-button" type={selected ? "submit" : "button"} disabled={busy} onClick={!selected ? loadState === "error" ? () => void load() : () => document.getElementById("slots-title")?.scrollIntoView?.({ behavior: "smooth", block: "start" }) : undefined}>{busy ? "Confirming…" : selected ? "Confirm appointment" : loadState === "error" ? "Retry loading times" : "Choose an appointment time"}</button>
+            <p className="privacy-note">Your details are used to confirm this appointment.</p>
+          </form>
+        </aside>
       </div>
     </main>
   );
