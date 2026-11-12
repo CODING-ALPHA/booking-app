@@ -20,6 +20,7 @@ button:disabled { cursor: not-allowed; }
 .hero > p:last-child { font-size: 1.12rem; color: #63746d; max-width: 580px; margin: 0; }
 .booking-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 32px; align-items: start; }
 .section-heading { display: flex; gap: 20px; justify-content: space-between; align-items: end; margin-bottom: 18px; }
+.filter-controls { display: flex; flex-wrap: wrap; gap: 10px; }
 .section-heading h2, .details-panel h2 { font-size: 1.52rem; letter-spacing: -.035em; line-height: 1.2; margin: 7px 0 0; }
 .step-label { margin: 0; }
 .filter-label { display: grid; gap: 5px; color: #5e6f68; font-size: .77rem; font-weight: 650; }

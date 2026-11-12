@@ -6,7 +6,7 @@ import Page from "../app/page";
 
 const slots = [
   { id: "a", provider: "Dr Ada", start: "2035-01-01T09:00:00Z", end: "2035-01-01T09:30:00Z", available: true },
-  { id: "b", provider: "Dr Bisi", start: "2035-01-01T10:00:00Z", end: "2035-01-01T10:30:00Z", available: true },
+  { id: "b", provider: "Dr Bisi", start: "2035-01-02T10:00:00Z", end: "2035-01-02T10:30:00Z", available: true },
 ];
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
 
@@ -37,6 +37,17 @@ describe("patient booking page", () => {
     fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "Dr Ada" } });
     expect(screen.queryByRole("button", { name: /Dr Bisi/ })).toBeNull();
     expect(screen.getByRole("option", { name: "Dr Bisi" })).not.toBeNull();
+  });
+
+  it("offers available dates and filters appointment times by date", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply({ slots })));
+    render(<Page />);
+    await screen.findByRole("button", { name: /Dr Ada/ });
+    const dateSelect = screen.getByLabelText("Date") as HTMLSelectElement;
+    expect(dateSelect.options.length).toBe(3);
+    fireEvent.change(dateSelect, { target: { value: dateSelect.options[2].value } });
+    expect(screen.queryByRole("button", { name: /Dr Ada/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Dr Bisi/ })).not.toBeNull();
   });
 
   it("books a selected time and displays its confirmation", async () => {

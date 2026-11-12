@@ -8,10 +8,15 @@ type LoadState = "loading" | "ready" | "error";
 
 const dateTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "full", timeStyle: "short" }).format(new Date(value));
 const time = (value: string) => new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date(value));
+const dayKey = (value: string) => {
+  const day = new Date(value);
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+};
 
 export default function Page() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [provider, setProvider] = useState("");
+  const [day, setDay] = useState("");
   const [selected, setSelected] = useState<Slot | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -44,7 +49,9 @@ export default function Page() {
   useEffect(() => { void load(); }, [load]);
 
   const providers = useMemo(() => [...new Set(slots.map((slot) => slot.provider))].sort(), [slots]);
-  const visibleSlots = useMemo(() => slots.filter((slot) => slot.available && new Date(slot.start).getTime() > Date.now() && (!provider || slot.provider === provider)), [slots, provider]);
+  const futureSlots = useMemo(() => slots.filter((slot) => slot.available && new Date(slot.start).getTime() > Date.now() && (!provider || slot.provider === provider)), [slots, provider]);
+  const dates = useMemo(() => [...new Map(futureSlots.map((slot) => [dayKey(slot.start), slot.start])).entries()], [futureSlots]);
+  const visibleSlots = useMemo(() => futureSlots.filter((slot) => !day || dayKey(slot.start) === day), [futureSlots, day]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,10 +102,26 @@ export default function Page() {
       <div className="hero"><p className="eyebrow">Book a visit</p><h1>Care that fits your day.</h1><p>Choose an available time, add your details, and get an instant confirmation.</p></div>
       <div className="booking-layout">
         <section className="slots-section" aria-labelledby="slots-title">
-          <div className="section-heading"><div><p className="step-label">01 / Choose a time</p><h2 id="slots-title">Available appointments</h2></div><label className="filter-label">Provider<select value={provider} onChange={(event) => { setProvider(event.target.value); setSelected(null); setNotice(""); requestKey.current = null; }}><option value="">All providers</option>{providers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label></div>
+          <div className="section-heading">
+            <div><p className="step-label">01 / Choose a time</p><h2 id="slots-title">Available appointments</h2></div>
+            <div className="filter-controls">
+              <label className="filter-label">Date
+                <select value={day} onChange={(event) => { setDay(event.target.value); setSelected(null); setNotice(""); requestKey.current = null; }}>
+                  <option value="">All dates</option>
+                  {dates.map(([key, start]) => <option key={key} value={key}>{new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(start))}</option>)}
+                </select>
+              </label>
+              <label className="filter-label">Provider
+                <select value={provider} onChange={(event) => { setProvider(event.target.value); setDay(""); setSelected(null); setNotice(""); requestKey.current = null; }}>
+                  <option value="">All providers</option>
+                  {providers.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
           {loadState === "loading" && <div className="state-card" role="status">Finding available appointments…</div>}
           {loadState === "error" && <div className="state-card" role="alert"><strong>We couldn&apos;t load appointments.</strong><p>{loadError}</p><button className="text-button" onClick={() => void load()}>Try again</button></div>}
-          {loadState === "ready" && visibleSlots.length === 0 && <div className="state-card"><strong>No times available{provider ? ` for ${provider}` : ""}.</strong><p>Try another provider or check back later.</p>{provider && <button className="text-button" onClick={() => setProvider("")}>See all providers</button>}</div>}
+          {loadState === "ready" && visibleSlots.length === 0 && <div className="state-card"><strong>No appointment times available{day ? " on this date" : provider ? ` for ${provider}` : ""}.</strong><p>{slots.length === 0 ? "The clinic has not published any appointment slots yet." : "Try another date or provider, or check back later."}</p>{day && <button className="text-button" onClick={() => setDay("")}>See all dates</button>}{provider && <button className="text-button" onClick={() => { setProvider(""); setDay(""); }}>See all providers</button>}</div>}
           {loadState === "ready" && visibleSlots.length > 0 && <div className="slot-list">{visibleSlots.map((slot) => <button type="button" key={slot.id} aria-pressed={selected?.id === slot.id} className={`slot-card ${selected?.id === slot.id ? "slot-selected" : ""}`} onClick={() => { setSelected(slot); setNotice(""); requestKey.current = null; }}><span className="slot-info"><strong>{slot.provider}</strong><span>{dateTime(slot.start)}</span><small>Until {time(slot.end)}</small></span><span className="slot-action">{selected?.id === slot.id ? "Selected ✓" : "Choose time"}</span></button>)}</div>}
         </section>
         <aside className="details-panel" aria-labelledby="details-title">
