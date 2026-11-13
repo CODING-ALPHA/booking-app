@@ -141,13 +141,13 @@ export default function Page() {
           <li className={step === "details" ? "current" : ""}><span className="step-number">2</span><span><strong>Your details</strong><small>Name and email</small></span></li>
           <li><span className="step-number">3</span><span><strong>Confirmation</strong><small>Booking reference</small></span></li>
         </ol>
-        {step === "schedule" && providers.length > 1 && <label className="provider-filter">Clinician <select aria-label="Provider" value={provider} onChange={(event) => changeProvider(event.target.value)}><option value="">All clinicians</option>{providers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>}
         <p className="sidebar-note">Your details are only used to confirm your visit.</p>
       </aside>
 
       {step === "schedule" ? <div className="schedule-layout">
         <section className="calendar-panel" aria-labelledby="schedule-title">
           <div className="panel-heading"><p className="eyebrow">Step 1 of 2</p><h2 id="schedule-title">Choose a date &amp; time</h2><p>Dates with appointments are marked below.</p></div>
+          {providers.length > 1 && <label className="provider-filter">Clinician <select aria-label="Provider" value={provider} onChange={(event) => changeProvider(event.target.value)}><option value="">All clinicians</option>{providers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>}
           <div className="month-bar"><h3>{monthLabel}</h3><div className="month-buttons"><button type="button" aria-label="Previous month" disabled={month <= firstMonth} onClick={() => changeMonth(-1)}><ChevronLeft size={18} aria-hidden="true" /></button><button type="button" aria-label="Next month" disabled={month >= lastMonth} onClick={() => changeMonth(1)}><ChevronRight size={18} aria-hidden="true" /></button></div></div>
           <div className="calendar-grid" role="group" aria-label={monthLabel}>
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label) => <span className="weekday" key={label}>{label}</span>)}

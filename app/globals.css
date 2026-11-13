@@ -30,7 +30,7 @@ button:disabled { cursor: default; }
 .steps .current .step-number { border-color: #294d65; background: #294d65; color: #fff; }
 .steps .complete { color: #4b626f; }
 .steps .complete .step-number { border-color: #708d9d; color: #294d65; }
-.provider-filter { display: grid; gap: .45rem; color: #535e64; font-size: .78rem; font-weight: 600; }
+.provider-filter { display: grid; gap: .45rem; max-width: 18rem; margin-top: 1.5rem; color: #535e64; font-size: .78rem; font-weight: 600; }
 .provider-filter select { width: 100%; min-height: 2.65rem; padding: 0 .7rem; border: 1px solid #d6dcdf; border-radius: .5rem; background: #fff; color: #253139; transition: border-color .15s, background-color .15s; }
 .provider-filter select:hover { border-color: #8ca5b5; background: #fbfcfd; }
 .provider-filter select:focus { border-color: #456b87; }
@@ -41,6 +41,7 @@ button:disabled { cursor: default; }
 .panel-heading h2, .details-step h2 { margin: .45rem 0 .45rem; font-size: clamp(1.55rem, 2.3vw, 2rem); line-height: 1.15; letter-spacing: -.035em; font-weight: 650; }
 .panel-heading > p:last-child { margin: 0; color: #6e777c; font-size: .88rem; }
 .month-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 3rem 0 1.2rem; }
+.provider-filter + .month-bar { margin-top: 2rem; }
 .month-bar h3 { margin: 0; font-size: 1rem; letter-spacing: -.015em; font-weight: 650; }
 .month-buttons { display: flex; gap: .4rem; }
 .month-buttons button { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; padding: 0; border: 1px solid #dbe0e3; border-radius: 50%; background: #fff; color: #324d5f; transition: background-color .15s, border-color .15s, transform .12s; }
