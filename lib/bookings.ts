@@ -5,7 +5,14 @@ import { booking } from "./format";
 import { ApiResult, Booking } from "./types";
 
 const APP_LOCK = 294_817; // Serializes reset, booking and cancellation across server instances.
-const fingerprint = (input: { slot_id: string; name: string; email: string }) => crypto.createHash("sha256").update(JSON.stringify(input)).digest("hex");
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    return `{${Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+const fingerprint = (body: unknown) => crypto.createHash("sha256").update(stableJson(body)).digest("hex");
 const response = (status: number, body: ApiResult["body"], headers?: Record<string, string>): ApiResult => ({ status, body, headers });
 
 async function rateLimit(client: PoolClient, email: string): Promise<ApiResult | null> {
@@ -20,29 +27,39 @@ async function rateLimit(client: PoolClient, email: string): Promise<ApiResult |
   return null;
 }
 
-/** Records an identifiable invalid request; malformed emails cannot form a bucket. */
-export async function recordFailedAttempt(email: string): Promise<ApiResult | null> {
-  return transaction((client) => rateLimit(client, email));
-}
-
 async function saveIdempotency(client: PoolClient, key: string | null, hash: string, result: ApiResult) {
   if (key) await client.query("INSERT INTO idempotency_records(key, fingerprint, response_status, response_body) VALUES ($1, $2, $3, $4::jsonb)", [key, hash, result.status, JSON.stringify(result.body)]);
 }
 
-export async function createBooking(input: { slot_id: string; name: string; email: string }, idempotencyKey: string | null): Promise<ApiResult> {
-  const hash = fingerprint(input);
+async function replayIdempotency(client: PoolClient, key: string | null, hash: string): Promise<ApiResult | null> {
+  if (!key) return null;
+  const prior = await client.query<{ fingerprint: string; response_status: number; response_body: ApiResult["body"] }>("SELECT fingerprint, response_status, response_body FROM idempotency_records WHERE key = $1", [key]);
+  if (!prior.rowCount) return null;
+  const record = prior.rows[0];
+  return record.fingerprint === hash
+    ? response(record.response_status, record.response_body, record.response_status === 429 ? { "Retry-After": "1" } : undefined)
+    : response(422, { error: "Idempotency-Key was reused with a different request." });
+}
+
+export async function rejectInvalidBooking(body: unknown, email: string | null, idempotencyKey: string | null): Promise<ApiResult> {
+  const hash = fingerprint(body);
+  return transaction(async (client) => {
+    await client.query("SELECT pg_advisory_xact_lock($1)", [APP_LOCK]);
+    const replay = await replayIdempotency(client, idempotencyKey, hash);
+    if (replay) return replay;
+    const result = email ? await rateLimit(client, email) ?? response(400, { error: "Invalid booking request" }) : response(400, { error: "Invalid booking request" });
+    await saveIdempotency(client, idempotencyKey, hash, result);
+    return result;
+  });
+}
+
+export async function createBooking(input: { slot_id: string; name: string; email: string }, idempotencyKey: string | null, requestBody: unknown = input): Promise<ApiResult> {
+  const hash = fingerprint(requestBody);
   try {
     return await transaction(async (client) => {
       await client.query("SELECT pg_advisory_xact_lock($1)", [APP_LOCK]);
-      if (idempotencyKey) {
-        const prior = await client.query<{ fingerprint: string; response_status: number; response_body: ApiResult["body"] }>("SELECT fingerprint, response_status, response_body FROM idempotency_records WHERE key = $1", [idempotencyKey]);
-        if (prior.rowCount) {
-          const record = prior.rows[0];
-          return record.fingerprint === hash
-            ? response(record.response_status, record.response_body, record.response_status === 429 ? { "Retry-After": "1" } : undefined)
-            : response(422, { error: "Idempotency-Key was reused with a different request." });
-        }
-      }
+      const replay = await replayIdempotency(client, idempotencyKey, hash);
+      if (replay) return replay;
       const limited = await rateLimit(client, input.email);
       if (limited) { await saveIdempotency(client, idempotencyKey, hash, limited); return limited; }
       const slot = await client.query<{ id: string; start: Date }>("SELECT id, start FROM slots WHERE id = $1 FOR UPDATE", [input.slot_id]);

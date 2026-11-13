@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@netlify/database": "2.0.3",
+    "lucide-react": "1.72.0",
     "next": "15.5.29",
     "pg": "8.13.1",
     "react": "19.0.0",

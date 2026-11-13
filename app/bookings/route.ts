@@ -1,5 +1,5 @@
 import { requireApiKey } from "@/lib/auth";
-import { createBooking, recordFailedAttempt } from "@/lib/bookings";
+import { createBooking, rejectInvalidBooking } from "@/lib/bookings";
 import { query } from "@/lib/db";
 import { booking } from "@/lib/format";
 import { error, json } from "@/lib/http";
@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const unauthorized = requireApiKey(request); if (unauthorized) return unauthorized;
   const raw = await readJson(request), parsed = bookingSchema.safeParse(raw);
-  if (!parsed.success) { const email = normalizeEmail((raw as { email?: unknown } | undefined)?.email); if (email) { try { const limited = await recordFailedAttempt(email); if (limited) return json(limited.body, limited.status, limited.headers); } catch { return error("Internal server error", 500); } } return error("Invalid booking request", 400); }
-  try { const result = await createBooking(parsed.data, request.headers.get("idempotency-key")); return json(result.body, result.status, result.headers); } catch { return error("Internal server error", 500); }
+  if (!parsed.success) { try { const email = normalizeEmail((raw as { email?: unknown } | undefined)?.email); const result = await rejectInvalidBooking(raw, email, request.headers.get("idempotency-key")); return json(result.body, result.status, result.headers); } catch { return error("Internal server error", 500); } }
+  try { const result = await createBooking(parsed.data, request.headers.get("idempotency-key"), raw); return json(result.body, result.status, result.headers); } catch { return error("Internal server error", 500); }
 }
 function decodeCursor(cursor: string): { created_at: string; id: string } | null {
   try {

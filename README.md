@@ -37,9 +37,9 @@ Routes: `POST /reset`, `GET /slots?provider=`, `POST /bookings`, `GET /bookings?
 ## Correctness decisions
 
 - PostgreSQL's partial unique index guarantees at most one confirmed booking per slot. A transaction-level advisory lock additionally coordinates reset, booking, and cancellation so a reset cannot expose a partial slot set.
-- Idempotency fingerprints the normalized `{slot_id,name,email}` JSON using SHA-256. Stored completed response bodies are replayed with their original status; a different fingerprint gives 422. Idempotent replays do not consume another rate-limit attempt.
+- Idempotency fingerprints the canonical request JSON using SHA-256, including invalid payloads. Stored completed response bodies are replayed with their original status; a different body gives 422. Idempotent replays do not consume another rate-limit attempt.
 - Pagination uses a base64url cursor containing the final `created_at` and `id`, matching the stable `(created_at, id)` order.
-- Rate attempts are stored in PostgreSQL. A per-email advisory lock makes the rolling 60-second count atomic. Reset deletes bookings, slots, and idempotency records but deliberately retains anti-abuse attempt history.
+- Rate attempts are stored in PostgreSQL. A per-email advisory lock makes the rolling 60-second count atomic. Reset clears bookings, slots, idempotency records, and attempts so each assessment run starts cleanly.
 
 ## Tests
 

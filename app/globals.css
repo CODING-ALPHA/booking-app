@@ -14,7 +14,6 @@ button:disabled { cursor: default; }
 .topbar { min-height: 5.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #e6e8e9; }
 .topbar > span { color: #6a7175; font-size: .88rem; }
 .brand { display: flex; align-items: center; gap: .7rem; font-size: 1.05rem; font-weight: 650; letter-spacing: -.025em; }
-.brand-symbol { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1.5px solid #273d4c; border-radius: .35rem; color: #273d4c; font-size: 1.4rem; line-height: 1; font-weight: 400; }
 
 .booking-window { display: grid; grid-template-columns: minmax(210px, 245px) minmax(0, 1fr); margin-top: 2.25rem; min-height: 37rem; border: 1px solid #e2e6e7; border-radius: 1rem; overflow: hidden; background: #fff; box-shadow: 0 8px 28px rgba(20, 34, 42, .045); }
 .booking-sidebar { display: flex; flex-direction: column; min-width: 0; padding: 2.25rem 1.65rem; border-right: 1px solid #e7e9ea; background: #fafbfb; }
@@ -32,7 +31,9 @@ button:disabled { cursor: default; }
 .steps .complete { color: #4b626f; }
 .steps .complete .step-number { border-color: #708d9d; color: #294d65; }
 .provider-filter { display: grid; gap: .45rem; color: #535e64; font-size: .78rem; font-weight: 600; }
-.provider-filter select { width: 100%; min-height: 2.65rem; padding: 0 .7rem; border: 1px solid #d6dcdf; border-radius: .5rem; background: #fff; color: #253139; }
+.provider-filter select { width: 100%; min-height: 2.65rem; padding: 0 .7rem; border: 1px solid #d6dcdf; border-radius: .5rem; background: #fff; color: #253139; transition: border-color .15s, background-color .15s; }
+.provider-filter select:hover { border-color: #8ca5b5; background: #fbfcfd; }
+.provider-filter select:focus { border-color: #456b87; }
 .sidebar-note { margin: auto 0 0; padding-top: 2rem; color: #7a858a; font-size: .76rem; line-height: 1.5; }
 
 .schedule-layout { display: grid; grid-template-columns: minmax(310px, 1fr) minmax(235px, .63fr); min-width: 0; }
@@ -42,8 +43,9 @@ button:disabled { cursor: default; }
 .month-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 3rem 0 1.2rem; }
 .month-bar h3 { margin: 0; font-size: 1rem; letter-spacing: -.015em; font-weight: 650; }
 .month-buttons { display: flex; gap: .4rem; }
-.month-buttons button { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; padding: 0 0 .15rem; border: 1px solid #dbe0e3; border-radius: 50%; background: #fff; color: #324d5f; font-size: 1.6rem; line-height: 1; transition: background-color .15s, transform .12s; }
+.month-buttons button { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; padding: 0; border: 1px solid #dbe0e3; border-radius: 50%; background: #fff; color: #324d5f; transition: background-color .15s, border-color .15s, transform .12s; }
 .month-buttons button:hover:not(:disabled) { background: #f3f6f8; }
+.month-buttons button:hover:not(:disabled) { border-color: #aebfc9; }
 .month-buttons button:disabled { color: #c1c8cc; border-color: #ecedef; }
 .month-buttons button:active:not(:disabled), .date-cell:active:not(:disabled), .time-option:active, .primary-button:active:not(:disabled), .back-button:active { transform: scale(.97); transition: transform .1s ease-out; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .28rem; }
@@ -51,8 +53,9 @@ button:disabled { cursor: default; }
 .calendar-grid .weekday { color: #818b90; font-size: .76rem; font-weight: 550; }
 .date-cell { width: 100%; border: 1px solid transparent; border-radius: .55rem; background: transparent; color: #a4acb0; font-size: .87rem; font-weight: 500; transition: background-color .15s, border-color .15s, transform .12s; }
 .date-cell:not(:disabled) { background: #edf2f5; color: #294d65; }
-.date-cell:not(:disabled):hover { background: #e0eaf0; }
+.date-cell:not(:disabled):hover { background: #dce8ef; box-shadow: inset 0 0 0 1px #8baaba; }
 .date-cell.date-selected, .date-cell.date-selected:not(:disabled) { background: #294d65; color: #fff; }
+.date-cell.date-selected:not(:disabled):hover { background: #1d3d53; box-shadow: none; }
 .calendar-caption { display: flex; align-items: center; gap: .5rem; margin: 1.5rem 0 0; color: #717d83; font-size: .78rem; }
 .legend-dot { width: .65rem; height: .65rem; border-radius: .22rem; background: #dfe9ef; }
 
@@ -60,8 +63,9 @@ button:disabled { cursor: default; }
 .times-heading h3 { margin: .45rem 0 1.5rem; font-size: 1.18rem; line-height: 1.25; letter-spacing: -.02em; font-weight: 650; }
 .time-list { display: grid; align-content: start; gap: .65rem; }
 .time-option { display: flex; align-items: center; justify-content: space-between; gap: .75rem; width: 100%; min-height: 3.85rem; padding: .65rem .8rem; text-align: left; border: 1px solid #dce2e5; border-radius: .6rem; background: #fff; color: #263137; transition: border-color .15s, background-color .15s, transform .12s; }
-.time-option:hover { border-color: #8ca5b5; background: #fbfcfd; }
+.time-option:hover { border-color: #799aac; background: #f5f9fb; }
 .time-option.time-selected { border-color: #294d65; background: #f3f7f9; }
+.time-option.time-selected:hover { background: #e9f1f5; }
 .time-option strong, .time-option small { display: block; }
 .time-option > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .time-option strong { font-size: .91rem; font-weight: 650; }
@@ -71,15 +75,18 @@ button:disabled { cursor: default; }
 .status-message { margin: 0 0 1rem; color: #67757c; font-size: .86rem; line-height: 1.5; }
 .status-message strong { color: #334147; }
 .status-message p { margin: .4rem 0 0; }
-.form-notice { margin: 1rem 0; padding: .7rem .8rem; border-radius: .5rem; background: #f9efec; color: #944437; font-size: .82rem; line-height: 1.45; }
+.status-error { display: flex; align-items: flex-start; gap: .65rem; padding: .85rem; border: 1px solid #edc6c2; border-radius: .55rem; background: #fff4f3; color: #a32d2d; }
+.status-error strong, .status-error p { color: #a32d2d; }
+.status-error svg, .form-notice svg { flex: none; margin-top: .05rem; }
+.form-notice { display: flex; align-items: flex-start; gap: .6rem; margin: 1rem 0; padding: .7rem .8rem; border: 1px solid #edc6c2; border-radius: .5rem; background: #fff4f3; color: #a32d2d; font-size: .82rem; line-height: 1.45; }
 .primary-button { display: flex; align-items: center; justify-content: center; gap: .65rem; width: 100%; min-height: 3rem; padding: .7rem 1rem; border: 1px solid #294d65; border-radius: .55rem; background: #294d65; color: #fff; font-size: .9rem; font-weight: 650; transition: background-color .15s, transform .12s; }
 .primary-button:hover:not(:disabled) { background: #1d3d53; }
 .primary-button:disabled { background: #9aa8b1; border-color: #9aa8b1; }
 .continue-button { margin-top: auto; }
-.continue-button span { font-size: 1.05rem; font-weight: 400; }
 
 .details-step { width: min(100%, 580px); margin: 0 auto; padding: 2.5rem 2rem 3.5rem; }
-.back-button { display: inline-flex; align-items: center; margin: 0 0 2.5rem; padding: .2rem 0; border: 0; background: transparent; color: #49697e; font-size: .86rem; font-weight: 600; transition: transform .12s; }
+.back-button { display: inline-flex; align-items: center; gap: .4rem; margin: 0 0 2.5rem; padding: .2rem 0; border: 0; background: transparent; color: #49697e; font-size: .86rem; font-weight: 600; transition: color .15s, transform .12s; }
+.back-button:hover { color: #1d3d53; text-decoration: underline; text-underline-offset: .2em; }
 .support-copy { margin: 0; color: #67757c; font-size: .91rem; line-height: 1.55; }
 .selected-appointment { display: grid; gap: .2rem; margin: 2rem 0 2.25rem; padding: 1rem 1.1rem; border: 1px solid #dce3e7; border-radius: .65rem; background: #f8fafb; font-size: .85rem; }
 .selected-appointment .eyebrow { margin-bottom: .4rem; }
@@ -91,11 +98,12 @@ button:disabled { cursor: default; }
 .details-step input { width: 100%; min-height: 3rem; margin-bottom: 1.35rem; padding: .65rem .85rem; border: 1px solid #d5dde1; border-radius: .55rem; background: #fff; color: #263137; }
 .details-step input::placeholder { color: #9aa4a9; }
 .details-step input:focus { border-color: #56788c; }
+.details-step input:hover:not(:focus) { border-color: #9cadb6; }
 .details-step form .primary-button { margin-top: .35rem; }
 
 .confirmation-page { max-width: 850px; }
 .confirmation-content { max-width: 590px; margin: 5rem auto; }
-.success-mark { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin-bottom: 1.5rem; border: 1px solid #7291a2; border-radius: 50%; color: #294d65; font-size: 1.1rem; }
+.success-mark { display: block; width: 2.5rem; height: 2.5rem; margin-bottom: 1.5rem; color: #294d65; stroke-width: 1.5; }
 .confirmation-content h1 { margin: .5rem 0 .75rem; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; letter-spacing: -.04em; font-weight: 650; }
 .booking-summary { margin: 2.5rem 0 2rem; border-top: 1px solid #e1e6e8; }
 .booking-summary > div { display: grid; grid-template-columns: minmax(110px, .42fr) 1fr; gap: 1rem; padding: .95rem 0; border-bottom: 1px solid #e1e6e8; font-size: .88rem; }

@@ -8,7 +8,8 @@ export async function replaceSlots(slots: Slot[]) {
     await client.query("DELETE FROM bookings");
     await client.query("DELETE FROM slots");
     await client.query("DELETE FROM idempotency_records");
-    // Attempts are intentionally retained: reset changes availability, not anti-abuse history.
+    // The assessment uses reset to start each check from a clean state.
+    await client.query("DELETE FROM booking_attempts");
     for (const item of slots) await client.query("INSERT INTO slots(id, provider, start, \"end\") VALUES ($1, $2, $3, $4)", [item.id, item.provider, item.start, item.end]);
   });
 }

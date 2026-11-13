@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
 
 type Slot = { id: string; provider: string; start: string; end: string; available: boolean };
 type Booking = { id: string; name: string; email: string };
@@ -112,11 +113,11 @@ export default function Page() {
     } finally { setBusy(false); }
   }
 
-  const brand = <div className="brand"><span className="brand-symbol" aria-hidden="true">+</span><span>Koya Clinic</span></div>;
+  const brand = <div className="brand">Koya Clinic</div>;
   if (confirmation) return <main className="page-frame confirmation-page">
     <header className="topbar">{brand}<span>Appointment booking</span></header>
     <section className="confirmation-content" aria-live="polite">
-      <div className="success-mark" aria-hidden="true">✓</div>
+      <CheckCircle2 className="success-mark" aria-hidden="true" />
       <p className="eyebrow">Appointment confirmed</p><h1>You&apos;re all set.</h1>
       <p className="support-copy">Your appointment is booked. Save the reference below for your records.</p>
       <dl className="booking-summary">
@@ -147,7 +148,7 @@ export default function Page() {
       {step === "schedule" ? <div className="schedule-layout">
         <section className="calendar-panel" aria-labelledby="schedule-title">
           <div className="panel-heading"><p className="eyebrow">Step 1 of 2</p><h2 id="schedule-title">Choose a date &amp; time</h2><p>Dates with appointments are marked below.</p></div>
-          <div className="month-bar"><h3>{monthLabel}</h3><div className="month-buttons"><button type="button" aria-label="Previous month" disabled={month <= firstMonth} onClick={() => changeMonth(-1)}>‹</button><button type="button" aria-label="Next month" disabled={month >= lastMonth} onClick={() => changeMonth(1)}>›</button></div></div>
+          <div className="month-bar"><h3>{monthLabel}</h3><div className="month-buttons"><button type="button" aria-label="Previous month" disabled={month <= firstMonth} onClick={() => changeMonth(-1)}><ChevronLeft size={18} aria-hidden="true" /></button><button type="button" aria-label="Next month" disabled={month >= lastMonth} onClick={() => changeMonth(1)}><ChevronRight size={18} aria-hidden="true" /></button></div></div>
           <div className="calendar-grid" role="group" aria-label={monthLabel}>
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label) => <span className="weekday" key={label}>{label}</span>)}
             {calendarCells.map((date, index) => date ? <button type="button" key={dayKey(date)} className={`date-cell ${dayKey(date) === day ? "date-selected" : ""}`} aria-label={new Intl.DateTimeFormat(undefined, { dateStyle: "full" }).format(date)} aria-pressed={dayKey(date) === day} disabled={!availableDays.has(dayKey(date))} onClick={() => { setDay(dayKey(date)); setSelected(null); setNotice(""); requestKey.current = null; }}>{date.getDate()}</button> : <span key={`blank-${index}`} aria-hidden="true" />)}
@@ -157,20 +158,20 @@ export default function Page() {
         <section className="times-panel" aria-labelledby="times-title">
           <div className="times-heading"><p className="eyebrow">Available times</p><h3 id="times-title">{day ? new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date(`${day}T12:00:00`)) : "Select a date"}</h3></div>
           {loadState === "loading" && <p className="status-message" role="status">Finding available appointments…</p>}
-          {loadState === "error" && <div className="status-message" role="alert"><strong>We couldn&apos;t load appointments.</strong><p>{loadError}</p></div>}
+          {loadState === "error" && <div className="status-message status-error" role="alert"><AlertCircle size={18} aria-hidden="true" /><div><strong>We couldn&apos;t load appointments.</strong><p>{loadError}</p></div></div>}
           {loadState === "ready" && visibleSlots.length === 0 && <div className="status-message"><strong>No appointment times available{provider ? ` for ${provider}` : ""}.</strong><p>{slots.length === 0 ? "The clinic has not published any appointments yet." : "Try another date or clinician, or check back later."}</p></div>}
-          {loadState === "ready" && visibleSlots.length > 0 && <div className="time-list">{visibleSlots.map((slot) => <button type="button" key={slot.id} className={`time-option ${selected?.id === slot.id ? "time-selected" : ""}`} aria-pressed={selected?.id === slot.id} onClick={() => { setSelected(slot); setNotice(""); requestKey.current = null; }}><span><strong>{time(slot.start)}</strong><small>{slot.provider}</small></span><span className="time-indicator" aria-hidden="true">{selected?.id === slot.id ? "✓" : ""}</span></button>)}</div>}
-          {notice && <p className="form-notice" role="alert">{notice}</p>}
-          <button type="button" className="primary-button continue-button" onClick={continueToDetails}>{loadState === "error" ? "Retry loading times" : selected ? "Continue" : "Choose an appointment time"}<span aria-hidden="true">→</span></button>
+          {loadState === "ready" && visibleSlots.length > 0 && <div className="time-list">{visibleSlots.map((slot) => <button type="button" key={slot.id} className={`time-option ${selected?.id === slot.id ? "time-selected" : ""}`} aria-pressed={selected?.id === slot.id} onClick={() => { setSelected(slot); setNotice(""); requestKey.current = null; }}><span><strong>{time(slot.start)}</strong><small>{slot.provider}</small></span><span className="time-indicator" aria-hidden="true">{selected?.id === slot.id && <Check size={13} strokeWidth={2.5} />}</span></button>)}</div>}
+          {notice && <p className="form-notice" role="alert"><AlertCircle size={17} aria-hidden="true" />{notice}</p>}
+          <button type="button" className="primary-button continue-button" onClick={continueToDetails}>{loadState === "error" ? "Retry loading times" : selected ? "Continue" : "Choose an appointment time"}{loadState === "error" ? <RotateCw size={17} aria-hidden="true" /> : <ArrowRight size={17} aria-hidden="true" />}</button>
         </section>
       </div> : <section className="details-step" aria-labelledby="details-title">
-        <button type="button" className="back-button" onClick={() => { setStep("schedule"); setNotice(""); }}>← Back to date &amp; time</button>
+        <button type="button" className="back-button" onClick={() => { setStep("schedule"); setNotice(""); }}><ArrowLeft size={16} aria-hidden="true" />Back to date &amp; time</button>
         <p className="eyebrow">Step 2 of 2</p><h2 id="details-title">Your details</h2><p className="support-copy">We&apos;ll use these to confirm your appointment.</p>
         <div className="selected-appointment"><span className="eyebrow">Selected appointment</span><strong>{selected?.provider}</strong><span>{selected && `${dateTime(selected.start)} – ${time(selected.end)}`}</span></div>
         <form onSubmit={submit}>
           <label htmlFor="patient-name">Full name</label><input id="patient-name" name="name" autoComplete="name" required maxLength={120} value={name} onChange={(event) => { setName(event.target.value); requestKey.current = null; }} placeholder="Your full name" />
           <label htmlFor="patient-email">Email address</label><input id="patient-email" name="email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => { setEmail(event.target.value); requestKey.current = null; }} placeholder="you@example.com" />
-          {notice && <p className="form-notice" role="alert">{notice}</p>}
+          {notice && <p className="form-notice" role="alert"><AlertCircle size={17} aria-hidden="true" />{notice}</p>}
           <button className="primary-button" type="submit" disabled={busy}>{busy ? "Confirming…" : "Confirm appointment"}</button>
         </form>
       </section>}
