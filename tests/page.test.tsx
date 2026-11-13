@@ -39,13 +39,13 @@ describe("patient booking page", () => {
     expect(screen.getByRole("option", { name: "Dr Bisi" })).not.toBeNull();
   });
 
-  it("offers available dates and filters appointment times by date", async () => {
+  it("marks available calendar dates and shows only times for the chosen day", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => reply({ slots })));
     render(<Page />);
     await screen.findByRole("button", { name: /Dr Ada/ });
-    const dateSelect = screen.getByLabelText("Date") as HTMLSelectElement;
-    expect(dateSelect.options.length).toBe(3);
-    fireEvent.change(dateSelect, { target: { value: dateSelect.options[2].value } });
+    const secondDate = screen.getByRole("button", { name: /^Tuesday, 2 January 2035$/ });
+    expect((secondDate as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(secondDate);
     expect(screen.queryByRole("button", { name: /Dr Ada/ })).toBeNull();
     expect(screen.getByRole("button", { name: /Dr Bisi/ })).not.toBeNull();
   });
@@ -61,6 +61,8 @@ describe("patient booking page", () => {
     vi.stubGlobal("crypto", { randomUUID: () => "retry-key" });
     render(<Page />);
     fireEvent.click(await screen.findByRole("button", { name: /Dr Ada/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Your details" })).not.toBeNull();
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Ada Obi" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ada@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm appointment" }));
@@ -79,6 +81,7 @@ describe("patient booking page", () => {
     vi.stubGlobal("crypto", { randomUUID: () => "retry-key" });
     render(<Page />);
     fireEvent.click(await screen.findByRole("button", { name: /Dr Ada/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Ada Obi" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ada@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm appointment" }));
